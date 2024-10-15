@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Metadatos</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        .form-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            resize: vertical;
+        }
+        .form-group button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .form-container {
+                padding: 15px;
+                width: 95%;
+            }
+        }
+    </style>
+
+
+
+
+    <script>
+
+
+    
+        function generarPalabrasClave() {
+            var resumen = document.getElementById("resumen").value;
+
+            if (resumen.trim() === "") {
+                alert("Por favor, ingresa un resumen.");
+                return;
+            }
+
+            $.ajax({
+                url: "/generar_palabras_clave",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ resumen: resumen }),
+                success: function (response) {
+                    if (response.error) {
+                        alert(response.error);
+                    } else {
+                        document.getElementById("palabrasClave").value = response.palabras_clave;
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert("Error al generar palabras clave.");
+                    console.error("Error:", error);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("resumen").addEventListener("blur", generarPalabrasClave);
+        });
+    
+
+
+
+        function toggleOtroInputGeneral(selectElement, otroDivId, otroInputId) {
+            const otroDiv = document.getElementById(otroDivId);
+            const otroInput = document.getElementById(otroInputId);
+
+            if (selectElement.value === 'OTRO') {
+                otroDiv.style.display = 'block';
+                otroInput.setAttribute('required', 'required');
+            } else {
+                otroDiv.style.display = 'none';
+                otroInput.removeAttribute('required');
+                otroInput.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("organizacionResponsable").addEventListener("change", function() {
+                toggleOtroInputGeneral(this, 'otroOrganizacionDiv', 'otroOrganizacion');
+            });
+
+            document.getElementById("sistemaReferencia").addEventListener("change", function() {
+                toggleOtroInputGeneral(this, 'otroSistemaReferenciaDiv', 'otroSistemaReferencia');
+            });
+
+            document.getElementById("idioma").addEventListener("change", function() {
+                toggleOtroInputGeneral(this, 'otroIdiomaDiv', 'otroIdioma');
+            });
+
+            document.getElementById("conformidad").addEventListener("change", function() {
+                toggleOtroInputGeneral(this, 'otroConformidadDiv', 'otroConformidad');
+            });
+        });
+
+    
+    
+
+
+    function toggleOtroInput(selectElement) {
+        const otroDiv = document.getElementById('otroFormatoDiv');
+        const otroInput = document.getElementById('otroFormato');
+        const formatoDistribucionFinal = document.getElementById('formatoDistribucionFinal');
+    
+        // Si se selecciona "OTRO", mostramos el campo de texto
+        if (selectElement.value === 'OTRO') {
+            otroDiv.style.display = 'block';
+            otroInput.setAttribute('required', 'required');  // Hacemos que el input sea obligatorio si se selecciona OTRO
+        } else {
+            otroDiv.style.display = 'none';
+            otroInput.removeAttribute('required');  // Eliminamos la obligatoriedad si no es OTRO
+            otroInput.value = '';  // Limpiamos el input en caso de que se haya usado antes
+            formatoDistribucionFinal.value = selectElement.value; // Guardamos directamente el valor del select
+        }
+    
+        // Guardamos el valor combinado cuando se cambia el valor del campo de texto
+        otroInput.addEventListener('input', function() {
+            if (selectElement.value === 'OTRO') {
+                formatoDistribucionFinal.value = 'OTRO - ' + otroInput.value;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('ruta').addEventListener('input', function() {
+        var ruta = this.value;
+
+        // Extraer el último fragmento de la ruta después del último '\'
+        var titulo = ruta.substring(ruta.lastIndexOf('\\') + 1);
+        
+        // Colocar el título en el campo "Título"
+        document.getElementById('titulo').value = titulo;
+    });
+});
+
+
+</script>
+
+    
+
+
+</head>
+<body>
+    <div class="form-container">
+        <h2>Formulario de Levantamiento de Metadatos</h2>
+        <form method="POST">
+            
+            <div class="form-group">
+                <label for="ruta">Ruta relativa:</label>
+                <input type="text" id="ruta" name="ruta" required>
+            </div>
+            <div class="form-group">
+                <label for="titulo">Título:</label>
+                <input type="text" id="titulo" name="titulo" required>
+            </div>
+            <div class="form-group">
+                <label for="resumen">Resumen:</label>
+                <textarea id="resumen" name="resumen" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="palabrasClave">Palabras clave:</label>
+                <input type="text" id="palabrasClave" name="palabrasClave" required>
+            </div>
+            <div class="form-group">
+                <label for="proposito">Propósito:</label>
+                <textarea id="proposito" name="proposito" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="fechaCreacion">Fecha de creación:</label>
+                <input type="date" id="fechaCreacion" name="fechaCreacion" required>
+            </div>
+            <div class="form-group">
+                <label for="fechaActualizacion">Fecha de actualización:</label>
+                <input type="date" id="fechaActualizacion" name="fechaActualizacion" required>
+            </div>
+            <div class="form-group">
+                <label for="organizacionResponsable">Organización responsable:</label>
+                <select id="organizacionResponsable" name="organizacionResponsable" required>
+                    <option value="Citylabbiobio" selected>CITYLAB BIOBIO (Elaboración propia)</option>
+                    <option value="BCN">BCN (Biblioteca del Congreso Nacional de Chile)</option>
+                    <option value="BienesNacionales">Bienes nacionales</option>
+                    <option value="CarabinerosDeChile">Carabineros de Chile</option>
+                    <option value="CIREN">CIREN (Centro de Información de Recursos Naturales)</option>
+                    <option value="CMN">CMN (Consejo de Monumentos Nacionales)</option>
+                    <option value="CONAF">CONAF (Corporación Nacional Forestal)</option>
+                    <option value="DGA_MOP_GORE">DGA/MOP/GORE (Dirección General de Aguas/Ministerio de Obras Públicas/Gobierno Regional)</option>
+                    <option value="EFE">EFE (Empresa de los Ferrocarriles del Estado)</option>
+                    <option value="ESSBIO">ESSBIO (Empresa de Servicios Sanitarios del Bío Bío)</option>
+                    <option value="GORE">GORE (Gobierno Regional)</option>
+                    <option value="GORE_BIOBIO">GORE BIOBIO (Gobierno Regional del Bío Bío)</option>
+                    <option value="GORE_MIDEPLAN">GORE_MIDEPLAN (Gobierno Regional - Ministerio de Planificación)</option>
+                    <option value="IDEOCUC">IDEOCUC (Instituto de Estudios Urbanos y Territoriales de la Pontificia Universidad Católica de Chile)</option>
+                    <option value="INE">INE (Instituto Nacional de Estadísticas)</option>
+                    <option value="JUNJI">JUNJI (Junta Nacional de Jardines Infantiles)</option>
+                    <option value="MINEDUC">MINEDUC (Ministerio de Educación)</option>
+                    <option value="MINVU">MINVU (Ministerio de Vivienda y Urbanismo)</option>
+                    <option value="MINSAL">MINSAL (Ministerio de Salud)</option>
+                    <option value="MMA">MMA (Ministerio del Medio Ambiente)</option>
+                    <option value="MOP">MOP (Ministerio de Obras Públicas)</option>
+                    <option value="MunicipalidadDeConcepcion">Municipalidad de Concepción</option>
+                    <option value="NASA">NASA (Administración Nacional de Aeronáutica y el Espacio)</option>
+                    <option value="ONEMI">ONEMI (Oficina Nacional de Emergencia del Ministerio del Interior)</option>
+                    <option value="OpenStreetMap">Open Street Map</option>
+                    <option value="SeremiDeSalud">Seremi de salud (Secretaría Regional Ministerial de Salud)</option>
+                    <option value="SERVIU">SERVIU (Servicio de Vivienda y Urbanización)</option>
+                    <option value="SII">SII (Servicio de Impuestos Internos)</option>
+                    <option value="SI">S_I (Sistema de Información)</option>
+                    <option value="SRIIT">SRIIT (Sistema de Registro de Inversiones en Infraestructura de Telecomunicaciones)</option>
+                    <option value="Subtel">Subtel (Subsecretaría de Telecomunicaciones)</option>
+                    <option value="TECHO">TECHO (Techo para Chile)</option>
+                    <option value="MinisterioDeEnergia">Ministerio de energía</option>
+                    <option value="OTRO">OTRO</option>
+                </select>
+            </div>
+
+
+            <!-- Caja de texto oculta por defecto para "OTRO" de Organización Responsable -->
+
+            <div class="form-group" id="otroOrganizacionDiv" style="display:none;">
+                <label for="otroOrganizacion">Especificar OTRO organización:</label>
+                <input type="text" id="otroOrganizacion" name="otroOrganizacion" placeholder="Especificar organización">
+            </div>
+
+            <div class="form-group">
+                <label for="modificado">Modificado por laboratorio:</label>
+                <select id="modificado" name="modificado" required>
+                    <option value="TRUE">Sí</option>
+                    <option value="FALSE">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="contacto">Contacto:</label>
+                <input type="email" id="contacto" name="contacto" value="contacto@citylabbiobio.cl" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="sistemaReferencia">Sistema de referencia espacial:</label>
+                <select id="sistemaReferencia" name="sistemaReferencia" required>
+                    <option value="EPSG:32719" selected>UTM Zona 19S (EPSG: 32719)</option>
+                    <option value="EPSG:32718">UTM Zona 18S (EPSG: 32718)</option>
+                    <option value="EPSG:32720">UTM Zona 20S (EPSG: 32720)</option>
+                    <option value="EPSG:5360">SIRGAS-Chile (EPSG: 5360)</option>
+                    <option value="EPSG:4248">PSAD56 (EPSG: 4248)</option>
+                    <option value="EPSG:5641">REGVEN (EPSG: 5641)</option>
+                    <option value="OTRO">OTRO</option>
+                </select>
+            </div>
+
+
+            <!-- Caja de texto oculta por defecto para "OTRO" del Sistema de Referencia -->
+            <div class="form-group" id="otroSistemaReferenciaDiv" style="display:none;">
+                <label for="otroSistemaReferencia">Especificar OTRO sistema de referencia:</label>
+                <input type="text" id="otroSistemaReferencia" name="otroSistemaReferencia" placeholder="Especificar sistema de referencia">
+            </div>
+
+            <div class="form-group">
+                <label for="formatoDistribucion">Formato de distribución:</label>
+                <select id="formatoDistribucion" name="formatoDistribucion" required onchange="toggleOtroInput(this)">
+                    <option value="shp">Shapefile (.shp)</option>
+                    <option value="csv" selected>CSV</option>
+                    <option value="txt">TXT</option>
+                    <option value="tif">TIF</option>
+                    <option value="pdf">PDF</option>
+                    <option value="word">Word</option>
+                    <option value="OTRO">OTRO</option>
+                </select>
+            </div>
+            
+            <!-- Caja de texto oculta por defecto para "OTRO" -->
+            <div class="form-group" id="otroFormatoDiv" style="display:none;">
+                <label for="otroFormato">Especificar OTRO formato:</label>
+                <input type="text" id="otroFormato" name="otroFormato" placeholder="Especificar formato">
+            </div>
+            
+            <!-- Campo oculto que se enviará al servidor con el valor combinado -->
+            <input type="hidden" id="formatoDistribucionFinal" name="formatoDistribucionFinal">
+
+
+            <div class="form-group">
+                <label for="restricciones">Restricciones de uso:</label>
+                <textarea id="restricciones" name="restricciones" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="idioma">Idioma:</label>
+                <select id="idioma" name="idioma" required>
+                    <option value="es" selected>Español</option>
+                    <option value="en">Inglés</option>
+                    <option value="de">Alemán</option>
+                    <option value="zh">Chino</option>
+                    <option value="OTRO">OTRO</option>
+                </select>
+            </div>
+
+
+            <!-- Caja de texto oculta por defecto para "OTRO" del Idioma -->
+            <div class="form-group" id="otroIdiomaDiv" style="display:none;">
+                <label for="otroIdioma">Especificar OTRO idioma:</label>
+                <input type="text" id="otroIdioma" name="otroIdioma" placeholder="Especificar idioma">
+            </div>
+
+            <div class="form-group">
+                <label for="conformidad">Conformidad:</label>
+                <select id="conformidad" name="conformidad" required>
+                    <option value="ISO 19115-1:2014" selected>ISO 19115-1:2014</option>
+                    <option value="ISO 19115:2003">ISO 19115:2003</option>
+                    <option value="ISO 19139:2007">ISO 19139:2007</option>
+                    <option value="ISO 19115-2:2009">ISO 19115-2:2009</option>
+                    <option value="Estándar CSW">Estándar CSW</option>
+                    <option value="OTRO">OTRO</option>
+                </select>
+            </div>
+            
+
+            <!-- Caja de texto oculta por defecto para "OTRO" de la Conformidad -->
+            <div class="form-group" id="otroConformidadDiv" style="display:none;">
+                <label for="otroConformidad">Especificar OTRO conformidad:</label>
+                <input type="text" id="otroConformidad" name="otroConformidad" placeholder="Especificar conformidad">
+            </div>
+
+
+            <div class="form-group">
+                <button type="submit">Guardar</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
